@@ -4,8 +4,9 @@ import { useTheme } from "next-themes"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Moon, Sun, Lock, ShieldCheck } from "lucide-react"
+import { Moon, Sun, Lock, ShieldCheck, LogOut } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { logout } from "@/app/login/actions"
 
 export default function ConfiguracionPage() {
   const { theme, setTheme } = useTheme()
@@ -141,6 +142,20 @@ export default function ConfiguracionPage() {
             >
               {isUpdating ? "Actualizando..." : "Actualizar Contraseña"}
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sesión */}
+      <div className="md:hidden">
+        <Card className="glass-panel relative overflow-hidden border-error/20">
+          <CardContent className="p-4">
+            <form action={logout}>
+              <Button type="submit" variant="destructive" className="w-full flex items-center gap-2">
+                <LogOut className="h-5 w-5" />
+                Cerrar Sesión
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
