@@ -87,7 +87,7 @@ export function ChatBot() {
                 type="submit" 
                 size="icon" 
                 className="rounded-full rounded-tl-sm bg-primary hover:bg-primary/90 transition-transform active:scale-95 shrink-0"
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || !input?.trim()}
               >
                 <Send className="h-4 w-4" />
               </Button>
