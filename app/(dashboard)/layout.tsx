@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar"
 import { BottomNav } from "@/components/layout/bottom-nav"
 import { MobileHeader } from "@/components/layout/mobile-header"
+import { ChatBot } from "@/components/chat/chatbot"
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default function DashboardLayout({
         </main>
       </div>
       <BottomNav />
+      <ChatBot />
     </div>
   )
 }
