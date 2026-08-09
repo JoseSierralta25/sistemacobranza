@@ -1,5 +1,5 @@
 import { google } from '@ai-sdk/google';
-import { streamText } from 'ai';
+import { streamText, UIMessage as Message } from 'ai';
 
 // Permite respuestas de hasta 30 segundos
 export const maxDuration = 30;
