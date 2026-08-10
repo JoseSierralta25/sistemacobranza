@@ -1,5 +1,5 @@
 import { google } from '@ai-sdk/google';
-import { streamText, UIMessage as Message } from 'ai';
+import { streamText, Message } from 'ai';
 
 // Permite respuestas de hasta 30 segundos
 export const maxDuration = 30;
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     // Filtramos solo los mensajes recientes para no saturar el contexto
     const recentMessages = messages.slice(-10);
 
-    const result = streamText({
+    const result = await streamText({
       model: google('gemini-1.5-flash'),
       system: SYSTEM_PROMPT,
       messages: recentMessages,
