@@ -14,6 +14,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - comprobantes (or any direct storage requests if any)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/chat|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const recentMessages = messages.slice(-10);
 
     const result = await streamText({
-      model: google('gemini-2.5-flash'),
+      model: google('gemini-3.5-flash'),
       system: SYSTEM_PROMPT,
       messages: recentMessages,
     });
