@@ -30,7 +30,7 @@ export function ChatBot() {
 
       {/* Ventana de Chat */}
       {isOpen && (
-        <Card className="fixed bottom-36 md:bottom-24 right-4 md:right-8 z-50 w-[90vw] md:w-[400px] h-[500px] max-h-[70vh] flex flex-col shadow-2xl glass-panel border-outline-variant animate-in slide-in-from-bottom-10 fade-in duration-300 overflow-hidden">
+        <Card className="fixed bottom-36 md:bottom-24 right-4 md:right-8 z-50 w-[90vw] md:w-[400px] h-[500px] max-h-[70vh] flex flex-col shadow-2xl bg-background border-outline-variant animate-in slide-in-from-bottom-10 fade-in duration-300 overflow-hidden">
           <CardHeader className="bg-surface-variant/40 border-b border-outline-variant p-4 py-3 shrink-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="h-5 w-5 text-[#facc15]" />
