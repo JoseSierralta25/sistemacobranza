@@ -29,7 +29,7 @@ export default function NuevoPrestamoPage() {
     const totalInterest = safeAmount * (safeInterest / 100)
     const totalPayment = safeAmount + totalInterest
     const schedule = []
-    let currentDate = new Date()
+    const currentDate = new Date()
 
     if (loanType === "REVOLVENTE") {
       if (modality === "daily") currentDate.setDate(currentDate.getDate() + 1)

@@ -63,7 +63,7 @@ export default async function SupervisorDashboard() {
   // Example fallback if no DB rows
   const { data: kpiData } = await supabase.from('caja_bancos').select('*').single()
   const dailyExpected = kpiData?.daily_expected || 450;
-  const totalCapitalStreet = kpiData?.total_capital_street || 0;
+  
   const totalProfits = kpiData?.total_profits || 0;
 
   return (
@@ -140,6 +140,7 @@ export default async function SupervisorDashboard() {
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {overdueLoans && overdueLoans.length > 0 ? (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             overdueLoans.map((item: any) => {
               const client = item.client
               const loan = item.loan

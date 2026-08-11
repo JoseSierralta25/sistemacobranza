@@ -36,10 +36,11 @@ export default function OperacionesDashboard() {
       supabase.from('cuotas').select('*').eq('prestamo_id', selectedLoan.id).order('numero_cuota', { ascending: true })
         .then(({ data }) => setCuotas(data || []))
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCuotas([])
       setSelectedCuotas([])
     }
-  }, [selectedLoan])
+  }, [selectedLoan, supabase])
 
   const [showSuccess, setShowSuccess] = useState(false)
 
@@ -82,7 +83,7 @@ export default function OperacionesDashboard() {
     if (file) {
       const fileExt = file.name.split('.').pop()
       const fileName = `${selectedLoan.id}-${Math.random()}.${fileExt}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: uploadData,  } = await supabase.storage
         .from('comprobantes')
         .upload(fileName, file)
       
@@ -123,7 +124,7 @@ export default function OperacionesDashboard() {
       newBalance = newBalance - amount
       loanState = newBalance <= 0 ? 'COMPLETADO' : selectedLoan.estado
 
-      const { error: loanError } = await supabase.from('prestamos').update({
+      await supabase.from('prestamos').update({
         saldo_pendiente: newBalance,
         estado: loanState
       }).eq('id', selectedLoan.id)
@@ -171,7 +172,7 @@ export default function OperacionesDashboard() {
 
       // 3. Generar la NUEVA cuota para el próximo mes (Renovación)
       const lastCuota = cuotas[cuotas.length - 1]
-      let nextDate = new Date(lastCuota.fecha_vencimiento)
+      const nextDate = new Date(lastCuota.fecha_vencimiento)
       const freq = selectedLoan.frecuencia_pago
       if (freq === 'DIARIO') nextDate.setDate(nextDate.getDate() + 1)
       else if (freq === 'SEMANAL') nextDate.setDate(nextDate.getDate() + 7)
