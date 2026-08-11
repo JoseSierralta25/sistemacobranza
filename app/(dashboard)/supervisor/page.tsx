@@ -10,14 +10,16 @@ export const dynamic = 'force-dynamic'
 export default async function SupervisorDashboard() {
   const supabase = await createClient()
   
-  const hoy = new Date().toISOString().split('T')[0]
+  // Ajuste para zona horaria local (UTC-4 Venezuela)
+  const localDateObj = new Date(new Date().getTime() - (4 * 3600 * 1000))
+  const hoy = localDateObj.toISOString().split('T')[0]
 
-  // Fetch overdue cuotas dynamically instead of waiting for a CRON job
+  // Fetch overdue and today's cuotas dynamically
   const { data: cuotasVencidas } = await supabase
     .from('cuotas')
     .select('*, prestamos(*, clientes(*))')
     .eq('estado', 'PENDIENTE')
-    .lt('fecha_vencimiento', hoy)
+    .lte('fecha_vencimiento', hoy) // Use lte to include today's due payments
 
   const cuotasEnMora = cuotasVencidas || []
   const moraPorPrestamo = new Map()
@@ -34,22 +36,25 @@ export default async function SupervisorDashboard() {
         loan,
         client,
         montoMora: 0,
-        cuotasAtrasadas: 0
+        cuotasPendientes: 0
       })
     }
     
     const data = moraPorPrestamo.get(prestamoId)
     data.montoMora += Number(cuota.monto)
-    data.cuotasAtrasadas += 1
+    data.cuotasPendientes += 1
   }
   
   const overdueLoans = Array.from(moraPorPrestamo.values())
 
   // Simple aggregations for KPIs dynamically querying from actual tables
+  // Use local timezone start of day for accurate 'today' collected
+  const startOfToday = new Date(localDateObj.setHours(0,0,0,0)).toISOString()
+  
   const { data: pagosHoy } = await supabase
     .from('pagos')
     .select('monto_pagado')
-    .gte('created_at', new Date(new Date().setHours(0,0,0,0)).toISOString())
+    .gte('created_at', startOfToday)
 
   const todayCollected = pagosHoy?.reduce((sum, pago) => sum + Number(pago.monto_pagado), 0) || 0;
 
@@ -135,7 +140,7 @@ export default async function SupervisorDashboard() {
       <div className="flex flex-col space-y-4 pt-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-error animate-pulse" />
-          <h2 className="text-headline-md-mobile text-on-surface">Alertas de Mora (Atrasos Reales)</h2>
+          <h2 className="text-headline-md-mobile text-on-surface">Cobros de Hoy y Atrasos</h2>
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -147,7 +152,7 @@ export default async function SupervisorDashboard() {
               const nombre = client.nombre || client.name || client.full_name;
               const doc = client.dni_cif || client.document;
               const tlf = client.telefono || client.phone;
-              const whatsappMsg = encodeURIComponent(`Hola ${nombre}, te escribimos de MR para recordarte que presentas un atraso de ${item.cuotasAtrasadas} cuota(s) por un monto de ${formatCurrency(item.montoMora)}. Por favor comunícate con nosotros.`)
+              const whatsappMsg = encodeURIComponent(`Hola ${nombre}, te escribimos de MR para recordarte que presentas un saldo pendiente de ${item.cuotasPendientes} cuota(s) por un monto de ${formatCurrency(item.montoMora)}. Por favor comunícate con nosotros.`)
               
               return (
                 <Card key={loan.id} className="border-error/50 bg-error/5 hover:border-error/80 hover:bg-error/10 transition-colors">
@@ -157,12 +162,12 @@ export default async function SupervisorDashboard() {
                         <CardTitle className="text-on-surface">{nombre}</CardTitle>
                         <p className="text-sm text-on-surface-variant mt-1">{doc}</p>
                       </div>
-                      <Badge variant="destructive" className="animate-pulse">{item.cuotasAtrasadas} Cuotas Atrasadas</Badge>
+                      <Badge variant="destructive" className="animate-pulse">{item.cuotasPendientes} Cuota(s)</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="pb-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-on-surface-variant">Monto Atrasado:</span>
+                      <span className="text-on-surface-variant">Monto Pendiente:</span>
                       <span className="font-bold text-error">{formatCurrency(item.montoMora)}</span>
                     </div>
                   </CardContent>
