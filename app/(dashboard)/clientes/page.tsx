@@ -19,8 +19,44 @@ export default function ClientesPage() {
   const supabase = createClient()
 
   const fetchClients = async () => {
-    const { data } = await supabase.from('clientes').select('*').order('nombre', { ascending: true })
-    if (data) setClients(data)
+    const { data } = await supabase
+      .from('clientes')
+      .select('*, prestamos(cuotas(estado, fecha_vencimiento))')
+      .order('nombre', { ascending: true })
+      
+    if (data) {
+      // Ajuste para zona horaria local (UTC-4 Venezuela)
+      const localDateObj = new Date(new Date().getTime() - (4 * 3600 * 1000))
+      const hoy = localDateObj.toISOString().split('T')[0]
+
+      const clientsWithStatus = data.map((client: any) => {
+        let computedStatus = "success"; // Al Día
+        
+        if (client.prestamos && client.prestamos.length > 0) {
+          for (const prestamo of client.prestamos) {
+            if (prestamo.cuotas && prestamo.cuotas.length > 0) {
+              for (const cuota of prestamo.cuotas) {
+                if (cuota.estado === 'PENDIENTE') {
+                  if (cuota.fecha_vencimiento < hoy) {
+                    computedStatus = "danger"; // Mora
+                    break;
+                  } else if (cuota.fecha_vencimiento === hoy && computedStatus !== "danger") {
+                    computedStatus = "warning"; // Cobro Hoy
+                  }
+                }
+              }
+            }
+            if (computedStatus === "danger") break;
+          }
+        }
+        
+        return {
+          ...client,
+          computedStatus
+        }
+      });
+      setClients(clientsWithStatus)
+    }
   }
 
   useEffect(() => {
@@ -124,8 +160,8 @@ export default function ClientesPage() {
                   <p className="text-xs text-on-surface-variant mt-0.5">{client.dni_cif || client.document}</p>
                 </div>
               </div>
-              <Badge variant={client.status === "danger" ? "destructive" : client.status === "warning" ? "warning" : "success"}>
-                {client.status === "danger" ? "Mora" : client.status === "warning" ? "Atención" : "Al Día"}
+              <Badge variant={client.computedStatus === "danger" ? "destructive" : client.computedStatus === "warning" ? "warning" : "success"}>
+                {client.computedStatus === "danger" ? "Mora" : client.computedStatus === "warning" ? "Cobro Hoy" : "Al Día"}
               </Badge>
             </CardHeader>
             <CardContent>
