@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { User, Phone, UserPlus, CheckCircle2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { getClientsWithStatus } from "./actions"
 
 export default function ClientesPage() {
   const [clients, setClients] = useState<any[]>([])
@@ -19,53 +20,8 @@ export default function ClientesPage() {
   const supabase = createClient()
 
   const fetchClients = async () => {
-    // 1. Fetch all clients
-    const { data: clientes } = await supabase
-      .from('clientes')
-      .select('*')
-      .order('nombre', { ascending: true })
-      
-    // 2. Fetch all cuotas in arrears or due today (EXACTLY like the dashboard)
-    const localDateObj = new Date(new Date().getTime() - (4 * 3600 * 1000))
-    const hoy = localDateObj.toISOString().split('T')[0]
-
-    const { data: cuotasVencidas } = await supabase
-      .from('cuotas')
-      .select('*, prestamos(cliente_id)')
-      .eq('estado', 'PENDIENTE')
-      .lte('fecha_vencimiento', hoy)
-
-    if (clientes) {
-      // Map clients with their dynamic status
-      const clientsWithStatus = clientes.map((client: any) => {
-        let computedStatus = "success"; // Al Día
-        
-        if (cuotasVencidas && cuotasVencidas.length > 0) {
-          // Find all overdue cuotas for this specific client
-          const cuotasDelCliente = cuotasVencidas.filter(
-            (cuota: any) => cuota.prestamos?.cliente_id === client.id
-          );
-
-          if (cuotasDelCliente.length > 0) {
-            // Check if any is strictly overdue
-            const hasMora = cuotasDelCliente.some((c: any) => c.fecha_vencimiento < hoy);
-            
-            if (hasMora) {
-              computedStatus = "danger"; // Mora
-            } else {
-              computedStatus = "warning"; // Cobro Hoy
-            }
-          }
-        }
-        
-        return {
-          ...client,
-          computedStatus
-        }
-      });
-      
-      setClients(clientsWithStatus)
-    }
+    const clientsWithStatus = await getClientsWithStatus();
+    setClients(clientsWithStatus);
   }
 
   useEffect(() => {
