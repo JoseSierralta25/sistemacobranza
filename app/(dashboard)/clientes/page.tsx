@@ -169,6 +169,9 @@ export default function ClientesPage() {
                 <Phone className="h-3 w-3" />
                 <span className="text-mono-data">+{client.telefono || client.phone}</span>
               </div>
+              <div className="text-[10px] text-on-surface-variant mt-2">
+                Debug: Prestamos: {client.prestamos?.length || 0} | Cuotas: {client.prestamos?.[0]?.cuotas?.length || 0}
+              </div>
             </CardContent>
             </Card>
           </div>
