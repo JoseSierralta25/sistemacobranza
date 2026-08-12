@@ -137,7 +137,7 @@ export default function ClientesPage() {
     <div className="flex w-full flex-col space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col space-y-2">
-          <h1 className="text-display-lg text-primary tracking-tight">Directorio de Clientes</h1>
+          <h1 className="text-display-lg text-primary tracking-tight">Directorio de Clientes (v2)</h1>
           <p className="text-body-base text-on-surface-variant">Listado completo de prestatarios</p>
         </div>
         <Button onClick={() => { setEditingClient(null); setName(""); setDocument(""); setPhone(""); setIsDialogOpen(true); }} className="w-full sm:w-auto gap-2 transition-transform active:scale-95">
@@ -161,7 +161,7 @@ export default function ClientesPage() {
                 </div>
               </div>
               <Badge variant={client.computedStatus === "danger" ? "destructive" : client.computedStatus === "warning" ? "warning" : "success"}>
-                {client.computedStatus === "danger" ? "Mora" : client.computedStatus === "warning" ? "Cobro Hoy" : "Al Día"}
+                {client.computedStatus === "danger" ? "Mora!" : client.computedStatus === "warning" ? "Cobro Hoy" : "Al Día."}
               </Badge>
             </CardHeader>
             <CardContent>
