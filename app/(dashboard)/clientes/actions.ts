@@ -1,8 +1,10 @@
 'use server'
 
 import { createClient } from "@/lib/supabase/server"
+import { unstable_noStore as noStore } from 'next/cache'
 
 export async function getClientsWithStatus() {
+  noStore();
   const supabase = await createClient();
   
   // 1. Fetch all clients
@@ -17,7 +19,7 @@ export async function getClientsWithStatus() {
 
   const { data: cuotasVencidas } = await supabase
     .from('cuotas')
-    .select('*, prestamos(cliente_id)')
+    .select('*, prestamos(*, clientes(*))')
     .eq('estado', 'PENDIENTE')
     .lte('fecha_vencimiento', hoy)
     
