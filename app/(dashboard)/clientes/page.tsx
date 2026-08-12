@@ -19,34 +19,42 @@ export default function ClientesPage() {
   const supabase = createClient()
 
   const fetchClients = async () => {
-    const { data } = await supabase
+    // 1. Fetch all clients
+    const { data: clientes } = await supabase
       .from('clientes')
-      .select('*, prestamos(cuotas(estado, fecha_vencimiento))')
+      .select('*')
       .order('nombre', { ascending: true })
       
-    if (data) {
-      // Ajuste para zona horaria local (UTC-4 Venezuela)
-      const localDateObj = new Date(new Date().getTime() - (4 * 3600 * 1000))
-      const hoy = localDateObj.toISOString().split('T')[0]
+    // 2. Fetch all cuotas in arrears or due today (EXACTLY like the dashboard)
+    const localDateObj = new Date(new Date().getTime() - (4 * 3600 * 1000))
+    const hoy = localDateObj.toISOString().split('T')[0]
 
-      const clientsWithStatus = data.map((client: any) => {
+    const { data: cuotasVencidas } = await supabase
+      .from('cuotas')
+      .select('*, prestamos(cliente_id)')
+      .eq('estado', 'PENDIENTE')
+      .lte('fecha_vencimiento', hoy)
+
+    if (clientes) {
+      // Map clients with their dynamic status
+      const clientsWithStatus = clientes.map((client: any) => {
         let computedStatus = "success"; // Al Día
         
-        if (client.prestamos && client.prestamos.length > 0) {
-          for (const prestamo of client.prestamos) {
-            if (prestamo.cuotas && prestamo.cuotas.length > 0) {
-              for (const cuota of prestamo.cuotas) {
-                if (cuota.estado === 'PENDIENTE') {
-                  if (cuota.fecha_vencimiento < hoy) {
-                    computedStatus = "danger"; // Mora
-                    break;
-                  } else if (cuota.fecha_vencimiento === hoy && computedStatus !== "danger") {
-                    computedStatus = "warning"; // Cobro Hoy
-                  }
-                }
-              }
+        if (cuotasVencidas && cuotasVencidas.length > 0) {
+          // Find all overdue cuotas for this specific client
+          const cuotasDelCliente = cuotasVencidas.filter(
+            (cuota: any) => cuota.prestamos?.cliente_id === client.id
+          );
+
+          if (cuotasDelCliente.length > 0) {
+            // Check if any is strictly overdue
+            const hasMora = cuotasDelCliente.some((c: any) => c.fecha_vencimiento < hoy);
+            
+            if (hasMora) {
+              computedStatus = "danger"; // Mora
+            } else {
+              computedStatus = "warning"; // Cobro Hoy
             }
-            if (computedStatus === "danger") break;
           }
         }
         
@@ -55,6 +63,7 @@ export default function ClientesPage() {
           computedStatus
         }
       });
+      
       setClients(clientsWithStatus)
     }
   }
@@ -137,7 +146,7 @@ export default function ClientesPage() {
     <div className="flex w-full flex-col space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col space-y-2">
-          <h1 className="text-display-lg text-primary tracking-tight">Directorio de Clientes (v2)</h1>
+          <h1 className="text-display-lg text-primary tracking-tight">Directorio de Clientes</h1>
           <p className="text-body-base text-on-surface-variant">Listado completo de prestatarios</p>
         </div>
         <Button onClick={() => { setEditingClient(null); setName(""); setDocument(""); setPhone(""); setIsDialogOpen(true); }} className="w-full sm:w-auto gap-2 transition-transform active:scale-95">
@@ -168,9 +177,6 @@ export default function ClientesPage() {
               <div className="flex items-center gap-2 text-sm text-on-surface-variant mt-2">
                 <Phone className="h-3 w-3" />
                 <span className="text-mono-data">+{client.telefono || client.phone}</span>
-              </div>
-              <div className="text-[10px] text-on-surface-variant mt-2">
-                Debug: Prestamos: {client.prestamos?.length || 0} | Cuotas: {client.prestamos?.[0]?.cuotas?.length || 0}
               </div>
             </CardContent>
             </Card>
