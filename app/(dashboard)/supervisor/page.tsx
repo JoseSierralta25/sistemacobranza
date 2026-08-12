@@ -36,13 +36,17 @@ export default async function SupervisorDashboard() {
         loan,
         client,
         montoMora: 0,
-        cuotasPendientes: 0
+        cuotasPendientes: 0,
+        fechaMasAntigua: cuota.fecha_vencimiento
       })
     }
     
     const data = moraPorPrestamo.get(prestamoId)
     data.montoMora += Number(cuota.monto)
     data.cuotasPendientes += 1
+    if (cuota.fecha_vencimiento < data.fechaMasAntigua) {
+      data.fechaMasAntigua = cuota.fecha_vencimiento;
+    }
   }
   
   const overdueLoans = Array.from(moraPorPrestamo.values())
@@ -152,23 +156,35 @@ export default async function SupervisorDashboard() {
               const nombre = client.nombre || client.name || client.full_name;
               const doc = client.dni_cif || client.document;
               const tlf = client.telefono || client.phone;
-              const whatsappMsg = encodeURIComponent(`Hola ${nombre}, te escribimos de MR para recordarte que presentas un saldo pendiente de ${item.cuotasPendientes} cuota(s) por un monto de ${formatCurrency(item.montoMora)}. Por favor comunícate con nosotros.`)
+              
+              const diffTime = new Date(hoy).getTime() - new Date(item.fechaMasAntigua).getTime();
+              const diasAtraso = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+              const diasText = diasAtraso > 0 ? ` (con ${diasAtraso} día(s) de atraso)` : ' (Vence hoy)';
+              
+              const whatsappMsg = encodeURIComponent(`Hola ${nombre}, te escribimos de MR para recordarte que presentas un saldo pendiente de ${item.cuotasPendientes} cuota(s)${diasAtraso > 0 ? ` con ${diasAtraso} día(s) de atraso` : ''} por un monto total de ${formatCurrency(item.montoMora)}. Por favor comunícate con nosotros.`)
               
               return (
-                <Card key={loan.id} className="border-error/50 bg-error/5 hover:border-error/80 hover:bg-error/10 transition-colors">
+                <Card key={loan.id} className={`border-error/50 bg-error/5 hover:border-error/80 hover:bg-error/10 transition-colors ${diasAtraso === 0 ? 'border-secondary/50 bg-secondary/5 hover:border-secondary/80 hover:bg-secondary/10' : ''}`}>
                   <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
-                        <CardTitle className="text-on-surface">{nombre}</CardTitle>
+                        <CardTitle className="text-on-surface leading-tight">{nombre}</CardTitle>
                         <p className="text-sm text-on-surface-variant mt-1">{doc}</p>
                       </div>
-                      <Badge variant="destructive" className="animate-pulse">{item.cuotasPendientes} Cuota(s)</Badge>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <Badge variant={diasAtraso > 0 ? "destructive" : "secondary"} className="animate-pulse whitespace-nowrap">
+                          {item.cuotasPendientes} Cuota(s)
+                        </Badge>
+                        <span className={`text-[10px] font-bold ${diasAtraso > 0 ? 'text-error' : 'text-secondary'}`}>
+                          {diasAtraso > 0 ? `${diasAtraso} DÍAS MORA` : 'COBRO HOY'}
+                        </span>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pb-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-on-surface-variant">Monto Pendiente:</span>
-                      <span className="font-bold text-error">{formatCurrency(item.montoMora)}</span>
+                      <span className={`font-bold ${diasAtraso > 0 ? 'text-error' : 'text-secondary'}`}>{formatCurrency(item.montoMora)}</span>
                     </div>
                   </CardContent>
                   <CardFooter>
